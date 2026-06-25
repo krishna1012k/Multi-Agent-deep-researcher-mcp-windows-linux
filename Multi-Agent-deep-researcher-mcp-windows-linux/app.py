@@ -2,82 +2,118 @@ import streamlit as st
 from agents import run_research
 import os
 
-# Set up page configuration
-st.set_page_config(page_title="🔍 Agentic Deep Researcher", layout="wide")
+# Set up sleek page configuration (collapsed sidebar by default)
+st.set_page_config(
+    page_title="Agentic Deep Researcher", 
+    page_icon="🔍",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# Initialize session state variables
-if "linkup_api_key" not in st.session_state:
-    st.session_state.linkup_api_key = ""
+# Custom Premium CSS Styling
+st.markdown("""
+    <style>
+        /* Main background and font styling */
+        .main {
+            background-color: #0d1117;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        /* Modern Header styling */
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #1f6feb, #58a6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.2rem;
+        }
+        .header-subtitle {
+            color: #8b949e;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Chat Input Adjustment */
+        .stChatInputContainer {
+            padding-bottom: 20px;
+        }
+        
+        /* Clean divider line */
+        hr {
+            border-top: 1px solid #30363d;
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+        
+        /* Hide sidebar toggle if it completely empty */
+        [data-testid="stSidebar"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Initialize session state variables safely
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 def reset_chat():
     st.session_state.messages = []
 
-# Sidebar: Linkup Configuration with updated logo link
-with st.sidebar:
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.write("")
-        st.image(
-            "https://avatars.githubusercontent.com/u/175112039?s=200&v=4", width=65)
-    with col2:
-        st.header("Linkup Configuration")
-        st.write("Deep Web Search")
-
-    st.markdown("[Get your API key](https://app.linkup.so/sign-up)",
-                unsafe_allow_html=True)
-
-    linkup_api_key = st.text_input(
-        "Enter your Linkup API Key", type="password")
-    if linkup_api_key:
-        st.session_state.linkup_api_key = linkup_api_key
-        # Update the environment variable
-        os.environ["LINKUP_API_KEY"] = linkup_api_key
-        st.success("API Key stored successfully!")
-
-# Main Chat Interface Header with powered by logos from original code links
+# --- MAIN INTERFACE ---
+# Title Header with gradient effect
 col1, col2 = st.columns([6, 1])
 with col1:
-    st.markdown("<h2 style='color: #0066cc;'>🔍 Agentic Deep Researcher</h2>",
-                unsafe_allow_html=True)
-    powered_by_html = """
-    <div style='display: flex; align-items: center; gap: 10px; margin-top: 5px;'>
-        <span style='font-size: 20px; color: #666;'>Powered by</span>
-        <img src="https://cdn.prod.website-files.com/66cf2bfc3ed15b02da0ca770/66d07240057721394308addd_Logo%20(1).svg" width="80"> 
-        <span style='font-size: 20px; color: #666;'>and</span>
-        <img src="https://framerusercontent.com/images/wLLGrlJoyqYr9WvgZwzlw91A8U.png?scale-down-to=512" width="100">
-    </div>
-    """
-    st.markdown(powered_by_html, unsafe_allow_html=True)
+    st.markdown('<div class="header-title">🔍 Agentic Deep Researcher</div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-subtitle">Powered by DeepSeek-R1 local models and Linkup internet intelligence agents</div>', unsafe_allow_html=True)
 with col2:
-    st.button("Clear ↺", on_click=reset_chat)
+    # Placed the clear action natively on the main view dashboard to keep layout functional
+    st.button("Clear History ↺", on_click=reset_chat, use_container_width=True)
 
-# Add spacing between header and chat history
-st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+st.markdown("<hr>", unsafe_allow_html=True)
 
-# Display chat history
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# Display active chat layout
+if not st.session_state.messages:
+    # Onboarding view
+    with st.container():
+        st.markdown("""
+        <div style='background-color: #161b22; padding: 30px; border-radius: 12px; border: 1px solid #30363d; margin-top: 20px;'>
+            <h4 style='color: #c9d1d9; margin-top: 0;'>Welcome to the Deep Research Assistant!</h4>
+            <p style='color: #8b949e; font-size: 0.95rem;'>
+                This application coordinates local reasoning models with real-time web execution graphs to provide complex, exhaustive answers.
+            </p>
+            <ul style='color: #8b949e; font-size: 0.9rem; padding-left: 20px;'>
+                <li>Deep multi-tier web searches and information extraction</li>
+                <li>Comprehensive cross-referencing and objective verification</li>
+                <li>Markdown formatted dynamic reports with full structures</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
-# Accept user input and process the research query
-if prompt := st.chat_input("Ask a question about your documents..."):
+else:
+    # Display message components sequentially
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+# Accept user prompt and process
+if prompt := st.chat_input("Enter your research objective or query here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    if not st.session_state.linkup_api_key:
-        response = "Please enter your Linkup API Key in the sidebar."
+    # Validate that system variable is set before executing
+    if not os.environ.get("LINKUP_API_KEY", ""):
+        response = "⚠️ **Configuration Error:** Please ensure the `LINKUP_API_KEY` environment variable is exported in your terminal before running the application."
     else:
-        with st.spinner("Researching... This may take a moment..."):
+        with st.spinner("🤖 Coordinating agents and researching internet data... Please wait..."):
             try:
                 result = run_research(prompt)
                 response = result
             except Exception as e:
-                response = f"An error occurred: {str(e)}"
+                response = f"❌ **An execution error occurred:** `{str(e)}`"
 
     with st.chat_message("assistant"):
         st.markdown(response)
-    st.session_state.messages.append(
-        {"role": "assistant", "content": response})
+        
+    st.session_state.messages.append({"role": "assistant", "content": response})

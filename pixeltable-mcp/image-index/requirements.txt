@@ -1,9 +1,0 @@
-pixeltable
-tiktoken
-openai
-spacy
-sentence-transformers
-mcp
-httpx
-uvicorn
-starlette
